@@ -15,10 +15,9 @@ source ven/bin/activate
 install all package
 
 ```bash
-```bash
 pip install -r requirements
 ```
-Run it. Open two CLI can communicate via local-loopback(port number have to match).
+Run it. Open two CLI can communicate via local-loopback(remember port number have to match).
 ```bash
 python client.py
 ```
