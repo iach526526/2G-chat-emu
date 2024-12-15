@@ -1,6 +1,13 @@
+from scipy.signal import butter, lfilter
 import binascii
 import numpy as np
-
+# 低通濾波器設計
+def butter_lowpass_filter(data, cutoff, Fs, order=5):
+    nyq = 0.5 * Fs  # 奈奎斯特頻率
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    y = lfilter(b, a, data)
+    return y
 # CRC16 校驗碼生成
 def generate_crc(data_bits):
     data_bytes = np.packbits(data_bits).tobytes()

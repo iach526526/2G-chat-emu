@@ -1,5 +1,11 @@
+from os import getenv
 import numpy as np
-from tool import check_crc
+from . tool import check_crc, xor_decrypt,butter_lowpass_filter
+from dotenv import load_dotenv
+load_dotenv()
+cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
+Fs = int(getenv("Fs"))  # 取樣頻率
+
 # FSK 解調
 def fsk_demodulate(fsk_signal, bit_rate=1000, f0=1000, f1=2000, Fs=8000):
     samples_per_bit = Fs // bit_rate
@@ -18,14 +24,19 @@ def fsk_demodulate(fsk_signal, bit_rate=1000, f0=1000, f1=2000, Fs=8000):
 
     return demodulated_bits
 
+# 語音反量化
+def dequantize_audio(quantized_signal):
+    dequantized_signal = quantized_signal.astype(np.float32) / 32767
+    return dequantized_signal
+
 # 解交錯並移除填充
 def deinterleave(bits, pad_size, block_size=10):
     deinterleaved_bits = bits.reshape((block_size, -1)).T.flatten()  # 解交錯
     if pad_size > 0:
         deinterleaved_bits = deinterleaved_bits[:-pad_size]  # 移除填充的部分
     return deinterleaved_bits
-
-def de_modual():
+# 解調變
+def de_modual(fsk_signal_with_noise, pad_size, encoded_bits, time):
     # 接收端解調
     demodulated_bits = fsk_demodulate(fsk_signal_with_noise)
 
@@ -58,12 +69,8 @@ def de_modual():
             # 放大信號，確保還原的音訊足夠大
             restored_audio_signal_filtered = restored_audio_signal_filtered * 10
 
-            return restored_audio_signal_filtered, restored_audio_signal, time, fsk_signal, fsk_signal_with_noise
+            return restored_audio_signal_filtered, restored_audio_signal, time
         else:
             print("CRC check failed. Data might be corrupted. Outputting corrupted signal.")
-            corrupted_signal = np.random.normal(0, 0.05, len(audio_signal))  # 模擬失敗音訊
-            return None, corrupted_signal, time, fsk_signal, fsk_signal_with_noise
     except Exception as e:
         print(f"Error during CRC check or data restoration: {e}")
-        corrupted_signal = np.random.normal(0, 0.05, len(audio_signal))  # 模擬失敗音訊
-        return None, corrupted_signal, time, fsk_signal, fsk_signal_with_noise

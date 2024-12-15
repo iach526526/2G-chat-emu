@@ -41,11 +41,12 @@ def connect_to_peer(host, port):
     return client_socket
 
 if __name__ == "__main__":
-    mode = input("Start as server or client? (server/client): ").strip().lower()
-    if mode == 'server':
+    mode = input("Start as server or client? (server:0/client:1): ").strip().lower()
+    # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
+    if mode == '0':
         port = int(input("Enter port to listen on: "))
         conn = start_server(port)
-    elif mode == 'client':
+    elif mode == '1':
         host = input("Enter server IP: ").strip()
         port = int(input("Enter server port: "))
         conn = connect_to_peer(host, port)

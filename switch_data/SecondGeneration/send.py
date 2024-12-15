@@ -1,19 +1,13 @@
-from scipy.signal import butter, lfilter
+from os import getenv
 import numpy as np
-from tool import xor_encrypt
-# 低通濾波器設計
-def butter_lowpass_filter(data, cutoff, Fs, order=5):
-    nyq = 0.5 * Fs  # 奈奎斯特頻率
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    y = lfilter(b, a, data)
-    return y
-
-# 語音反量化
-def dequantize_audio(quantized_signal):
-    dequantized_signal = quantized_signal.astype(np.float32) / 32767
-    return dequantized_signal
-
+from . tool import xor_encrypt,butter_lowpass_filter,generate_crc
+from dotenv import load_dotenv
+load_dotenv()
+cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
+# 語音量化
+def quantize_audio(signal):
+    quantized_signal = np.round(signal * 32767).astype(np.int16)
+    return quantized_signal
 
 # FSK 調變
 def fsk_modulate(bits, bit_rate=1000, f0=1000, f1=2000, Fs=8000):
@@ -44,7 +38,6 @@ def add_noise(signal, noise_level=0.1):  # 增加噪聲強度
 
 # 模擬 A 手機至 B 手機的完整流程
 def simulate_fsk_transmission(audio_signal, Fs=8000, noise=False, noise_level=0.1):
-    cutoff_freq = 3500  # 低通濾波器的截止頻率
     # 進行低通濾波，減少高頻噪音
     audio_signal_filtered = butter_lowpass_filter(audio_signal, cutoff_freq, Fs)
 
@@ -72,5 +65,7 @@ def simulate_fsk_transmission(audio_signal, Fs=8000, noise=False, noise_level=0.
     if noise:
         fsk_signal_with_noise = add_noise(fsk_signal, noise_level)  # 加入噪聲
         print("Noise added to the signal.")
+    
+    return fsk_signal_with_noise, pad_size, encoded_bits_crc, time
 
     
