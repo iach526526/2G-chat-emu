@@ -9,8 +9,8 @@ Fs = 8000
 
 def record(gen_sin:bool=False):
     print("Recording started. Please speak...")
-    if gen_sin:
     # 錄音
+    if gen_sin:
         # print(audio_signal)
         # 假資料(正弦波)
         fs = 44100 # Hz

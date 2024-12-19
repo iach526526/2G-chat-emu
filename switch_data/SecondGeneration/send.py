@@ -2,7 +2,7 @@ from os import getenv
 import numpy as np
 from . tool import xor_encrypt,butter_lowpass_filter,generate_crc
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
 # 語音量化
 def quantize_audio(signal):

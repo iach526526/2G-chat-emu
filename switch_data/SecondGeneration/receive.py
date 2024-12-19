@@ -2,7 +2,7 @@ from os import getenv
 import numpy as np
 from . tool import check_crc, xor_decrypt,butter_lowpass_filter
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
 Fs = int(getenv("Fs"))  # 取樣頻率
 
@@ -68,7 +68,7 @@ def de_modual(fsk_signal_with_noise, pad_size, encoded_bits, time):
 
             # 放大信號，確保還原的音訊足夠大
             restored_audio_signal_filtered = restored_audio_signal_filtered * 10
-
+            print("#Data restored.")
             return restored_audio_signal_filtered, restored_audio_signal, time
         else:
             print("CRC check failed. Data might be corrupted. Outputting corrupted signal.")

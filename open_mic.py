@@ -1,5 +1,8 @@
 import sounddevice as sd
-
+import numpy as np
+# import matplotlib.pyplot as plt
+import switch_data.SecondGeneration.receive as receive
+import switch_data.SecondGeneration.send as send
 # 全局參數
 Fs = 8000  # 取樣頻率
 BUFFER_SIZE = 1024  # 緩衝區大小，越小延遲越低，但可能導致卡頓
@@ -19,7 +22,10 @@ def microphone_loop():
                 if overflow:
                     print("Buffer overflow detected!")  # 提醒使用者有緩衝區溢出的情況
                 # 將音訊數據直接播放
-                output_stream.write(audio_data)
+                send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
+                receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
+                receive.restored_audio_signal_filtered = np.array(receive.restored_audio_signal_filtered, dtype='float32')
+                output_stream.write(receive.restored_audio_signal_filtered)
         except KeyboardInterrupt:
             print("\nMic-off: Stopping microphone.")
 
