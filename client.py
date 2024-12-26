@@ -34,22 +34,20 @@ def microphone_send(conn):
     """實現即時錄音並播放的麥克風功能"""
     print("Mic-on: Speak into the microphone. Press Ctrl+C to stop.")
     # 使用 InputStream 和 OutputStream 即時處理音訊
-    while True:
-        try:
-            with sd.InputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as input_stream, \
-                sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
-                # 從麥克風獲取音訊數據
-                audio_data, overflow = input_stream.read(BUFFER_SIZE)
-                if overflow:
-                    print("Buffer overflow detected!")  # 提醒使用者有緩衝區溢出的情況
-                # 將音訊數據調變成 2G 訊號
-                send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
-                receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
-                send_data = pickle.dumps(receive.restored_audio_signal_filtered)  # 序列化音訊數據
-                conn.send(send_data)
-        except Exception as e:
-            print(f"Error in microphone_send(): {e}")
-            exit(1)
+    with sd.InputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as input_stream,\
+        sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
+        while True:
+            try:
+                    # 從麥克風獲取音訊數據
+                    audio_data, overflow = input_stream.read(BUFFER_SIZE)
+                    if overflow:
+                        print("Buffer overflow detected!")  # 提醒使用者有緩衝區溢出的情況
+                    # 將音訊數據調變成 2G 訊號
+                    send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
+                    send_data = pickle.dumps(send.fsk_signal_with_noise)  # 序列化音訊數據
+                    conn.send(send_data)  
+            except Exception as e:
+                print(f"Error in microphone_send(): {e}")
             
 def microphone_receive(conn):
     """接收音訊並播放"""
@@ -73,7 +71,7 @@ def microphone_receive(conn):
                     
                     # 確保數據為 float32 格式的 numpy array
                     audio_array = np.array(audio_data, dtype='float32')
-                    
+                    # receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
                     # 播放音訊
                     output_stream.write(audio_array)
                     print("Audio data played.")
@@ -134,7 +132,8 @@ if __name__ == "__main__":
     # 啟動接收與傳送執行緒
     # threading.Thread(target=handle_receive_msg, args=(conn,), daemon=True).start()
     # threading.Thread(target=handle_send_msg, args=(conn,), daemon=True).start()
-    threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
+    if (mode == 'client'):
+        threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
     threading.Thread(target=microphone_receive, args=(conn,), daemon=True).start()
 
     # 保持主執行緒運行

@@ -3,9 +3,11 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
+import threading
+
 # 全局參數
 Fs = 8000  # 取樣頻率
-BUFFER_SIZE = 1024  # 緩衝區大小，越小延遲越低，但可能導致卡頓
+BUFFER_SIZE = 512  # 緩衝區大小，越小延遲越低，但可能導致卡頓
 
 def microphone_loop():
     """實現即時錄音並播放的麥克風功能"""
@@ -25,7 +27,8 @@ def microphone_loop():
                 send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
                 receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
                 receive.restored_audio_signal_filtered = np.array(receive.restored_audio_signal_filtered, dtype='float32')
-                output_stream.write(receive.restored_audio_signal_filtered)
+                # output_stream.write(receive.restored_audio_signal_filtered)
+                output_stream.write(audio_data)
         except KeyboardInterrupt:
             print("\nMic-off: Stopping microphone.")
 
@@ -33,5 +36,7 @@ def microphone_loop():
 if __name__ == "__main__":
     try:
         microphone_loop()
+        threading.Thread(target=microphone_loop,daemon=True).start()
+        
     except Exception as e:
         print(f"Error: {e}")
