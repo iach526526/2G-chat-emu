@@ -15,7 +15,7 @@ source ven/bin/activate
 install all package
 
 ```bash
-pip install -r requirements
+pip install -r requirements.txt
 ```
 Run it. Open two CLI can communicate via local-loopback(remember port number have to match).
 ```bash
