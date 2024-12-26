@@ -1,8 +1,10 @@
 import socket
 import pickle
+import argparse
 import threading
 import sounddevice as sd
 import numpy as np
+import re
 import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
 BUFFER_SIZE = 1024  # 緩衝區大小，越小延遲越低，但可能導致卡頓
@@ -97,16 +99,33 @@ def connect_to_peer(host, port):
     client_socket.connect((host, port))
     print(f"Connected to {host}:{port}")
     return client_socket
-
+def read_argv():
+    # return mode, port, host. if user didn't input port or host, use default value.
+    parser = argparse.ArgumentParser(description="Start as server or client.")
+    parser.add_argument("mode", choices=["server", "client"], help="Start as 'server' or 'client'")
+    parser.add_argument("--port", required=False, help="Port number default is 3000",type=int)
+    parser.add_argument("--host", required=False, help="Server IP address. default is '127.0.0.1'. Example:'192.168.0.1' (required for client mode)")
+    args = parser.parse_args()
+    if not args.port:
+        use_port = 3000 # default port
+    else:
+        use_port = args.port
+    if not args.host:
+        use_host = "127.0.0.1" # default host
+    else:
+        #check if IP vaild or not
+        use_host = args.host
+        ip_pattern = re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+        if not ip_pattern.match(use_host):
+            print("Invalid IP address format.")
+            exit(1)
+    return args.mode, use_port, use_host
 if __name__ == "__main__":
-    mode = input("Start as server or client? (server:0/client:1): ").strip().lower()
     # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
-    if mode == '0':
-        port = int(input("Enter port to listen on: "))
+    mode, port, host = read_argv()
+    if mode == 'server':
         conn = start_server(port)
-    elif mode == '1':
-        host = input("Enter server IP: ").strip()
-        port = int(input("Enter server port: "))
+    elif mode == 'client':
         conn = connect_to_peer(host, port)
     else:
         print("Invalid mode selected.")
