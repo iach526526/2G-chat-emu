@@ -4,6 +4,7 @@ import argparse
 import threading
 import sounddevice as sd
 import numpy as np
+import queue
 import re
 import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
@@ -30,30 +31,68 @@ def handle_send_msg(conn):
         except Exception as e:
             print(f"Error sending data: {e}")
             break
+audio_queue = queue.Queue()
+def modulation_thread(conn):
+    while True:
+        try:
+            # 從隊列中獲取音訊數據
+            audio_data = audio_queue.get()
+            if audio_data is None:
+                print("Audio data is None. Exiting modulation_thread().")
+                break
+
+            # 調變處理
+            send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
+            print("調變後", send.pad_size, send.encoded_bits_crc, send.time)
+
+            # 解調變處理
+            receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(
+                send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time
+            )
+
+            # 序列化並發送數據
+            # send_data = pickle.dumps(receive.restored_audio_signal_filtered)
+            send_data = pickle.dumps(audio_data)
+            conn.send(send_data)
+            print(f"已發送語音包，大小: {len(send_data)} bytes")
+
+        except Exception as e:
+            print(f"Error in modulation_thread(): {e}")
+
+# 主函數，負責錄音並將數據放入隊列
 def microphone_send(conn):
-    """實現即時錄音並播放的麥克風功能"""
+    """即時錄音並將音訊數據送入調變執行緒"""
     print("Mic-on: Speak into the microphone. Press Ctrl+C to stop.")
-    # 使用 InputStream 和 OutputStream 即時處理音訊
-    with sd.InputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as input_stream,\
-        sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
-        while True:
-            try:
+    
+    # 創建調變處理執行緒
+    mod_thread = threading.Thread(target=modulation_thread, args=(conn,))
+    mod_thread.start()
+
+    try:
+        # 使用 InputStream 即時錄音
+        with sd.InputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as input_stream:
+            while True:
+                try:
                     # 從麥克風獲取音訊數據
                     audio_data, overflow = input_stream.read(BUFFER_SIZE)
-                    print(len(audio_data),type(audio_data))
                     if overflow:
                         print("Buffer overflow detected!")  # 緩衝區溢出
-                    # 將音訊數據調變成 2G 訊號
-                    send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
-                    print("調變後",send.pad_size, send.encoded_bits_crc, send.time)
-                    # receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
-                    # send_data = pickle.dumps(receive.restored_audio_signal_filtered)  # 序列化音訊數據
-                    send_data = pickle.dumps(audio_data)  # 序列化音訊數據
-                    print(len(send_data))
-                    conn.send(send_data)
+                    print("原始聲音長度：", len(audio_data), type(audio_data))
+                    
+                    # 將音訊數據放入隊列
+                    audio_queue.put(audio_data)
 
-            except Exception as e:
-                print(f"Error in microphone_send(): {e}")
+                except Exception as e:
+                    print(f"Error in microphone_send() loop: {e}")
+                    break
+    except KeyboardInterrupt:
+        print("錄音停止")
+
+    finally:
+        # 停止子執行緒
+        audio_queue.put(None)  # 傳遞特殊訊號，讓子執行緒退出
+        mod_thread.join()
+        print("Mic-off: Program terminated.")
             
 def microphone_receive(conn):
     """接收音訊並播放"""
