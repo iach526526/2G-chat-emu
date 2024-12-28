@@ -40,19 +40,23 @@ def modulation_thread(conn):
             if audio_data is None:
                 print("Audio data is None. Exiting modulation_thread().")
                 break
-
+            # 檢查是否收到人聲，如果音量太小則跳過
+            if np.mean(np.abs(audio_data)) < 0.05:
+                print("Audio is silent, skipping transmission.")
+                continue  # 跳過發送過程，回到隊列等待新的音訊數據
             # 調變處理
             send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
-            print("調變後", send.pad_size, send.encoded_bits_crc, send.time)
+            # print("調變後", send.pad_size, send.encoded_bits_crc, send.time)
 
-            # 解調變處理
+            # # 解調變處理
             receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(
                 send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time
             )
-
+            # print("解調後長度",len(receive.restored_audio_signal_filtered), len(receive.restored_audio_signal), len(receive.time))
             # 序列化並發送數據
-            # send_data = pickle.dumps(receive.restored_audio_signal_filtered)
-            send_data = pickle.dumps(audio_data)
+            send_data = pickle.dumps(receive.restored_audio_signal_filtered)
+            # send_data = pickle.dumps(audio_data)
+            print("序列化後長度",len(send_data))
             conn.send(send_data)
             print(f"已發送語音包，大小: {len(send_data)} bytes")
 
@@ -99,7 +103,7 @@ def microphone_receive(conn):
     print("start reveive")
     try:
         # 沒有調變4250，調變後　8344
-        SIZE_OF_VOICE_PKG=4250
+        SIZE_OF_VOICE_PKG=8344
         buffer = bytearray(SIZE_OF_VOICE_PKG)
         bufferI = 0
         with sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
@@ -114,7 +118,6 @@ def microphone_receive(conn):
                 if receive_byte_count==0:
                     print("Connection closed by sender.")
                     break
-                
                 try:
                     # 嘗試反序列化完整的數據
                     audio_data = pickle.loads(memoryview(buffer)[:SIZE_OF_VOICE_PKG])
