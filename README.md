@@ -17,6 +17,10 @@ install all package
 ```bash
 pip install -r requirements.txt
 ```
+compile package
+```bash
+python setup.py build_ext --inplace
+```
 Run it. Open two CLI can communicate via local-loopback(remember port number have to match).
 ```bash
 python client.py
