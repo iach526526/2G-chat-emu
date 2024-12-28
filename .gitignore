@@ -1,2 +1,5 @@
 ven/
 __pycache__/
+build/
+*.pyd
+*.c
