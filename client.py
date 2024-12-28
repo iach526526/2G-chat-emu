@@ -40,34 +40,46 @@ def microphone_send(conn):
             try:
                     # 從麥克風獲取音訊數據
                     audio_data, overflow = input_stream.read(BUFFER_SIZE)
+                    print(len(audio_data),type(audio_data))
                     if overflow:
-                        print("Buffer overflow detected!")  # 提醒使用者有緩衝區溢出的情況
+                        print("Buffer overflow detected!")  # 緩衝區溢出
                     # 將音訊數據調變成 2G 訊號
                     send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
-                    send_data = pickle.dumps(send.fsk_signal_with_noise)  # 序列化音訊數據
-                    conn.send(send_data)  
+                    print("調變後",send.pad_size, send.encoded_bits_crc, send.time)
+                    # receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
+                    # send_data = pickle.dumps(receive.restored_audio_signal_filtered)  # 序列化音訊數據
+                    send_data = pickle.dumps(audio_data)  # 序列化音訊數據
+                    print(len(send_data))
+                    conn.send(send_data)
+
             except Exception as e:
                 print(f"Error in microphone_send(): {e}")
             
 def microphone_receive(conn):
     """接收音訊並播放"""
+    print("start reveive")
     try:
-        buffer = b''  # 用於累積接收到的數據
+        # 沒有調變4250，調變後　8344
+        SIZE_OF_VOICE_PKG=4250
+        buffer = bytearray(SIZE_OF_VOICE_PKG)
+        bufferI = 0
         with sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
             while True:
                 # 接收數據
-                data = conn.recv(BUFFER_SIZE)  # 根據情況調整緩衝區大小
-                if not data:
+                receive_byte_count=conn.recv_into(memoryview(buffer)[bufferI:],SIZE_OF_VOICE_PKG-bufferI)  # 根據情況調整緩衝區大小
+                bufferI += receive_byte_count
+                if bufferI >= SIZE_OF_VOICE_PKG:
+                    bufferI = 0
+                else:
+                    continue
+                if receive_byte_count==0:
                     print("Connection closed by sender.")
                     break
                 
-                # 累積接收到的數據
-                buffer += data
-                
                 try:
                     # 嘗試反序列化完整的數據
-                    audio_data = pickle.loads(buffer)
-                    buffer = b''  # 清空緩衝區以接收新的數據
+                    audio_data = pickle.loads(memoryview(buffer)[:SIZE_OF_VOICE_PKG])
+                    print(f"now buffer len is {len(buffer)}")
                     
                     # 確保數據為 float32 格式的 numpy array
                     audio_array = np.array(audio_data, dtype='float32')
@@ -77,6 +89,7 @@ def microphone_receive(conn):
                     print("Audio data played.")
                 except pickle.UnpicklingError:
                     # 如果數據不完整，繼續接收更多數據
+                    print("Data incomplete. Receiving more...") 
                     continue
     except Exception as e:
         print(f"Error receiving data: {e}")
