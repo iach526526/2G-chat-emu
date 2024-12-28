@@ -3,6 +3,7 @@ import numpy as np
 from scipy.signal import butter, lfilter
 import binascii
 from dotenv import load_dotenv
+from .tool import butter_lowpass_filter
 load_dotenv(override=True)
 
 cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
@@ -15,13 +16,7 @@ def add_noise(signal, noise_level=0.1):  # 增加噪聲強度
 # 模擬 A 手機至 B 手機的完整流程
 def simulate_fsk_transmission(audio_signal, Fs=8000, noise=False, noise_level=0.1):
     # 進行低通濾波，減少高頻噪音
-    nyq = 0.5 * Fs  # 奈奎斯特頻率
-    order = 5  # 濾波器階數
-    cutoff = cutoff_freq  # 截止頻率
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    # 使用lfilter一次處理音訊信號
-    audio_signal_filtered = lfilter(b, a, audio_signal)
+    audio_signal_filtered = butter_lowpass_filter(audio_signal,cutoff_freq,Fs)
 
     # 量化音訊信號
     quantized_audio = np.round(audio_signal_filtered * 32767).astype(np.int16)
