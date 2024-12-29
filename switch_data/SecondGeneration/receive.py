@@ -1,4 +1,5 @@
 from os import getenv
+import traceback
 import numpy as np
 import binascii
 from .tool import xor_decrypt, butter_lowpass_filter
@@ -32,20 +33,23 @@ def de_modual(fsk_signal, pad_size, encoded_bits, time):
         demodulated_bits = np.zeros(num_bits, dtype=int)
 
         # 先計算每一段的起始和結束索引
-        indices = np.arange(num_bits)[:, None] * samples_per_bit
-        start_indices = indices
-        end_indices = indices + samples_per_bit
-
+        # indices = np.arange(num_bits)[:, None] * samples_per_bit
+        start_indices = np.arange(0, len(fsk_signal), samples_per_bit)
+        end_indices = start_indices + samples_per_bit
+        print("###@",start_indices, end_indices)
         # 生成 2D 切片矩陣以提取對應的信號段
         bit_segments = np.array([fsk_signal[start:end] for start, end in zip(start_indices, end_indices)])
-
+        
+        
+        ref_segments_0 = np.reshape(ref_wave_0[:num_bits * samples_per_bit], (num_bits, samples_per_bit))
+        ref_segments_1 = np.reshape(ref_wave_1[:num_bits * samples_per_bit], (num_bits, samples_per_bit))
         # 計算結果矩陣
-        matches_0 = np.sum(bit_segments * ref_wave_0[start_indices:end_indices], axis=1)
-        matches_1 = np.sum(bit_segments * ref_wave_1[start_indices:end_indices], axis=1)
+        match_0 = np.sum(bit_segments * ref_segments_0, axis=1)
+        match_1 = np.sum(bit_segments * ref_segments_1, axis=1)
 
         # 判斷 demodulated_bits
-        demodulated_bits = (matches_1 > matches_0).astype(int)
-
+        demodulated_bits = (match_1 > match_0).astype(int)
+        
         # 驗證 CRC 校驗碼
         data_bits = demodulated_bits[:-16]  # 提取原始數據
         crc_received = demodulated_bits[-16:]  # 提取CRC校驗碼
@@ -79,11 +83,11 @@ def de_modual(fsk_signal, pad_size, encoded_bits, time):
 
             # 放大音訊信號
             restored_audio_signal_filtered *= 10
-            print("#Data restored.")
             return restored_audio_signal_filtered, restored_audio_signal, time
         else:
             print("CRC check failed. Data might be corrupted. Outputting corrupted signal.")
             return None, None, None
     except Exception as e:
-        print(f"Error during CRC check or data restoration: {e}")
+        print(f"Error during de_modual() or data restoration: {e}")
+        traceback.print_exc()
         return None, None, None

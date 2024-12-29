@@ -4,33 +4,58 @@ import argparse
 import threading
 import sounddevice as sd
 import numpy as np
+import struct
+import traceback
 import queue
 import re
 import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
 BUFFER_SIZE = 1024  # 緩衝區大小，越小延遲越低，但可能導致卡頓
 Fs = 8000  # 取樣頻率
-def handle_receive_msg(conn):
-    """接收訊息的執行緒"""
-    while True:
-        try:
-            data = conn.recv(1024).decode('utf-8')
-            if not data:
-                break
-            print(f"Received: {data}")
-        except Exception as e:
-            print(f"Error receiving data: {e}")
-            break
+def send_data_over_socket(conn, data):
+    """
+    傳送數據到接收端
+    :param conn: socket 連線對象
+    :param data: 要傳送的 Python 資料
+    """
+    try:
+        serialized_data = pickle.dumps(data)  # 序列化數據
+        data_size = len(serialized_data)  # 計算數據大小
+        conn.sendall(struct.pack(">I", data_size))  # 傳送數據大小（4 bytes）
+        conn.sendall(serialized_data)  # 傳送序列化的數據
+        print(f"已成功傳送 {data_size} bytes 的數據。")
+    except Exception as e:
+        print(f"傳送數據時發生錯誤: {e}")
+def receive_data_over_socket(conn):
+    """
+    接收來自傳送端的數據
+    :param conn: socket 連線對象
+    :return: 解包後的 Python 資料
+    """
+    try:
+        size_buffer = conn.recv(4)  # 接收數據大小（4 byte）
+        if len(size_buffer) < 4:
+            print("未接收到完整的數據大小資訊。")
+            return None
+        data_size = struct.unpack(">I", size_buffer)[0]  # 解析數據大小
+        print(f"準備接收 {data_size} bytes 的數據...")
 
-def handle_send_msg(conn):
-    """傳送訊息的執行緒"""
-    while True:
-        try:
-            message = input("Enter message: ")
-            conn.send(message.encode('utf-8'))
-        except Exception as e:
-            print(f"Error sending data: {e}")
-            break
+        buffer = bytearray(data_size)
+        buffer_view = memoryview(buffer)
+
+        received_size = 0
+        while received_size < data_size:
+            chunk_size = conn.recv_into(buffer_view[received_size:], data_size - received_size)
+            if chunk_size == 0:
+                raise ConnectionError("傳送端關閉連線。")
+            received_size += chunk_size
+
+        received_data = pickle.loads(buffer)  # 解包數據
+        print("數據接收成功並解包完成。")
+        return received_data
+    except Exception as e:
+        print(f"接收數據時發生錯誤: {e}")
+        return None
 audio_queue = queue.Queue()
 def modulation_thread(conn):
     while True:
@@ -41,24 +66,29 @@ def modulation_thread(conn):
                 print("Audio data is None. Exiting modulation_thread().")
                 break
             # 檢查是否收到人聲，如果音量太小則跳過
-            if np.mean(np.abs(audio_data)) < 0.05:
-                print("Audio is silent, skipping transmission.")
+            if np.mean(np.abs(audio_data)) < 0.5:
+                print(f"Audio is silent, skipping transmission.now mean is {np.mean(np.abs(audio_data))}")
                 continue  # 跳過發送過程，回到隊列等待新的音訊數據
             # 調變處理
             send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time = send.simulate_fsk_transmission(audio_data)
             # print("調變後", send.pad_size, send.encoded_bits_crc, send.time)
-
-            # # 解調變處理
-            receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(
-                send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time
-            )
+            # receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
+            # 打包資料
+            after_modulation_zip = {
+                "audio": send.fsk_signal_with_noise,
+                "pad_size": send.pad_size,
+                "encoded_bits_crc": send.encoded_bits_crc,
+                "time": send.time
+            }
+            send_data_over_socket(conn, after_modulation_zip)
+            
             # print("解調後長度",len(receive.restored_audio_signal_filtered), len(receive.restored_audio_signal), len(receive.time))
             # 序列化並發送數據
-            send_data = pickle.dumps(receive.restored_audio_signal_filtered)
+            # send_data = pickle.dumps(receive.restored_audio_signal_filtered)
             # send_data = pickle.dumps(audio_data)
-            print("序列化後長度",len(send_data))
-            conn.send(send_data)
-            print(f"已發送語音包，大小: {len(send_data)} bytes")
+            # conn.send(send_data)
+            # print("序列化後長度",len(send_data))
+            # print(f"已發送語音包，大小: {len(send_data)} bytes")
 
         except Exception as e:
             print(f"Error in modulation_thread(): {e}")
@@ -79,62 +109,46 @@ def microphone_send(conn):
                 try:
                     # 從麥克風獲取音訊數據
                     audio_data, overflow = input_stream.read(BUFFER_SIZE)
+                    # audio data is numpy ndarray. len is UFFER_SIZE(1024)
                     if overflow:
                         print("Buffer overflow detected!")  # 緩衝區溢出
-                    print("原始聲音長度：", len(audio_data), type(audio_data))
                     
-                    # 將音訊數據放入隊列
+                    # 將音訊數據放入 queue
                     audio_queue.put(audio_data)
 
                 except Exception as e:
                     print(f"Error in microphone_send() loop: {e}")
                     break
     except KeyboardInterrupt:
-        print("錄音停止")
-
-    finally:
-        # 停止子執行緒
-        audio_queue.put(None)  # 傳遞特殊訊號，讓子執行緒退出
         mod_thread.join()
-        print("Mic-off: Program terminated.")
+        print("錄音停止")
             
 def microphone_receive(conn):
     """接收音訊並播放"""
     print("start reveive")
-    try:
-        # 沒有調變4250，調變後　8344
-        SIZE_OF_VOICE_PKG=8344
-        buffer = bytearray(SIZE_OF_VOICE_PKG)
-        bufferI = 0
-        with sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
-            while True:
-                # 接收數據
-                receive_byte_count=conn.recv_into(memoryview(buffer)[bufferI:],SIZE_OF_VOICE_PKG-bufferI)  # 根據情況調整緩衝區大小
-                bufferI += receive_byte_count
-                if bufferI >= SIZE_OF_VOICE_PKG:
-                    bufferI = 0
-                else:
-                    continue
-                if receive_byte_count==0:
-                    print("Connection closed by sender.")
+    with sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
+        while True:
+            try:
+                received_data = receive_data_over_socket(conn)
+                print("收到了：",received_data)
+                if received_data is None:
+                    print("通道已關閉，結束接收音訊。")
                     break
-                try:
-                    # 嘗試反序列化完整的數據
-                    audio_data = pickle.loads(memoryview(buffer)[:SIZE_OF_VOICE_PKG])
-                    print(f"now buffer len is {len(buffer)}")
-                    
-                    # 確保數據為 float32 格式的 numpy array
-                    audio_array = np.array(audio_data, dtype='float32')
-                    # receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(send.fsk_signal_with_noise, send.pad_size, send.encoded_bits_crc, send.time)
-                    # 播放音訊
-                    output_stream.write(audio_array)
-                    print("Audio data played.")
-                except pickle.UnpicklingError:
-                    # 如果數據不完整，繼續接收更多數據
-                    print("Data incomplete. Receiving more...") 
-                    continue
-    except Exception as e:
-        print(f"Error receiving data: {e}")
+                # 解調變處理
+                rc_audio = np.asarray(received_data["audio"])
+                pad_size = int(received_data["pad_size"])
+                encoded_bits_crc = np.asarray(received_data["encoded_bits_crc"])
+                time = np.asarray(received_data["time"])
+                receive.restored_audio_signal_filtered, receive.restored_audio_signal, receive.time = receive.de_modual(
+                    rc_audio, pad_size, encoded_bits_crc, time)
+                restored_audio = np.array(receive.restored_audio_signal_filtered,dtype="float32")
+                output_stream.write(restored_audio)
+                print("Audio data played.")
+            except Exception as e:
+                print(f"Error in microphone_receive(): {e}")
+                traceback.print_exc()
+                break
+            
 
 def start_server(port):
     """啟動伺服器模式"""
