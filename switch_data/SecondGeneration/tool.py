@@ -1,5 +1,4 @@
 from scipy.signal import butter, lfilter
-import binascii
 import numpy as np
 # 低通濾波器設計
 def butter_lowpass_filter(data, cutoff, Fs, order=5):

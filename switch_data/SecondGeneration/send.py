@@ -1,6 +1,5 @@
 from os import getenv
 import numpy as np
-from scipy.signal import butter, lfilter
 import binascii
 from dotenv import load_dotenv
 from .tool import butter_lowpass_filter
