@@ -54,5 +54,5 @@ def simulate_fsk_transmission(audio_signal, Fs=8000, noise=False, noise_level=0.
     fsk_signal_with_noise = fsk_signal
     if noise:
         fsk_signal_with_noise = add_noise(fsk_signal, noise_level)  # 加入噪聲
-    print(" pad_size, encoded_bits_crc, time\n", pad_size, encoded_bits_crc, time)
-    return fsk_signal_with_noise, pad_size, encoded_bits_crc, time
+    # print(" pad_size, encoded_bits_crc, time\n", pad_size, encoded_bits_crc, time)
+    return fsk_signal_with_noise, pad_size, encoded_bits_crc

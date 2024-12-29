@@ -15,7 +15,7 @@ def generate_crc(data_bits):
     print(f"Generated CRC: 0x{crc_value:04x}")
     return np.concatenate([data_bits, crc_bits])
 # 解調變
-def de_modual(fsk_signal, pad_size, encoded_bits, time):
+def de_modual(fsk_signal, pad_size, encoded_bits):
     try:
         # 解調 FSK 信號
         bit_rate = 1000
@@ -36,9 +36,9 @@ def de_modual(fsk_signal, pad_size, encoded_bits, time):
         # indices = np.arange(num_bits)[:, None] * samples_per_bit
         start_indices = np.arange(0, len(fsk_signal), samples_per_bit)
         end_indices = start_indices + samples_per_bit
-        print("###@",start_indices, end_indices)
         # 生成 2D 切片矩陣以提取對應的信號段
-        bit_segments = np.array([fsk_signal[start:end] for start, end in zip(start_indices, end_indices)])
+        # bit_segments = np.array([fsk_signal[start:end] for start, end in zip(start_indices, end_indices)])
+        bit_segments = np.lib.stride_tricks.sliding_window_view(fsk_signal, end_indices[0] - start_indices[0])[start_indices]
         
         
         ref_segments_0 = np.reshape(ref_wave_0[:num_bits * samples_per_bit], (num_bits, samples_per_bit))
@@ -83,7 +83,7 @@ def de_modual(fsk_signal, pad_size, encoded_bits, time):
 
             # 放大音訊信號
             restored_audio_signal_filtered *= 10
-            return restored_audio_signal_filtered, restored_audio_signal, time
+            return restored_audio_signal_filtered
         else:
             print("CRC check failed. Data might be corrupted. Outputting corrupted signal.")
             return None, None, None
