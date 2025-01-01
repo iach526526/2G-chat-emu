@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Generation phone emulate</title>
+    <script src="https://font.emtech.cc/emfont.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        p {
+            font-size: large;
+        }
+
+        header>div,
+        main,
+        section>div {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 5rem);
+            background: #4955c4;
+            z-index: -10;
+        }
+
+        /* header::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 10rem;
+                
+                z-index: -2;
+            } */
+        .flex-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .flex-box>img {
+            flex: 6;
+            object-fit: contain;
+        }
+        header>div {
+            padding-top: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgb(0, 0, 0);
+        }
+        div > p{
+            margin: 1rem;
+        }
+        header h1 {
+            text-shadow: 2px 3px #eee9e9d3;
+        }
+
+        header a {
+            /* GitHub button */
+            background-color: rgb(18, 19, 19);
+            text-decoration: none;
+            color: rgb(255, 255, 255);
+            padding: 1.125rem 1rem;
+            display: block;
+            width: fit-content;
+        }
+
+        header p,
+        header a {
+            font-family: "GravityBold8";
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .how {
+            margin-top: 2rem;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        div,img,
+        li {
+            opacity: 0;
+            transition: all 1s;
+            transform: translateY(1em);
+        }
+
+        .ed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <header style="position:relative;">
+        <div>
+            <div>
+                <h1 class="emfont-MisekiBitmap">Second Generation phone emulate</h1>
+                <p class="emfont-Smiley-Sans">Author: iach526526</p>
+                <a href="https://github.com/iach526526" target="_blank" class="emfont-Smiley-Sans">Github</a>
+            </div>
+            <img src="img/tar.jpg" alt="phone" style="width: 350px;">
+        </div>
+    </header>
+    <main>
+
+        <div>
+            <h2>What it is?</h1>
+                <p>This is a python program that emulate 2G(Second Generation) mobile communications.
+                    It can simulate the process of making and receiving calls. Because of we don't have a real 2G base
+                    station, so I use socket point to point to transmit voice package.
+                </p>
+
+        </div>
+        <h2 class="how center">Schema</h2>
+        <section>
+            <div class="flex-box">
+                <div>
+                    <h3>Server</h3>
+                    <p>Server open specific port than waiting for client connect. When connect establish, server receive voice from client and de-modulation, play it.
+                        In real world, server is receive phone call person.
+                        It always in base station signal range, but it is passive start a session.
+                    </p>
+                
+                    <h3>Client</h3>
+                    <p>Client connect to server start the voice session. It will record the voice,modulation and send voice to the
+                        server. </p>
+                    <h3>Base station</h3>
+                    <p>Base station is a device that provide signal to mobile phone. It is a active device that always send signal to mobile phone.
+                        In this project, we don't have a real base station. Just use wireless AP or loopback address to simulate it.
+                    </p>
+                </div>
+                <img src="img/basic_schema.png" alt="server" style="width: 300px;">
+            </div>
+            <div class="flex-box">
+                <p>So...<br>
+                    You have know server and client concept, now we combine those. 
+                    Make the end point play server and client in the same time. We will receive voice from opposite 'client'(you are server now) and transmit voice from yours client program.
+                </p>
+            </div>
+        </section>
+        <h2 class="how center">How to use</h2>
+        <section>
+            <div class="flex-box">
+                
+                    
+            </div>
+        <section>
+        <h2 class="how center">By this project code,You can...</h2>
+        <section>
+            <div class="flex-box">
+                <div>
+                    <h3>Learn how 2G work</h3>
+                    <p>2G is a old technology, but it is a good start point to learn how mobile communication work. It is simple and easy to understand.
+                        You can learn how voice transmit in the air, how to modulate and de-modulate voice. I spend some time to enhance modulation process  by numpy vector cacculate to make it more quickly.
+                    </p>
+                    <h3>Learn how socket work</h3>
+                    <p>Socket is a basic concept in network programming. It is a good start point to learn how to communicate between two or more devices.
+                        I use serial package 'pickle' to serialize voice package and send it to another side. You can learn how to use it to send complex data.
+                    </p>
+                    <h3>Talk to your friend in local network</h3>
+                    <p>
+                        This is the least practical use of this project I think...<br>
+                        Now we have Discord, Skype, Line, Messenger...etc can communicate with anyone in this world. 
+                        But mabe sometimes you want to talk to your 
+                        friend in local network just like childhood we use paper cup tied a line 
+                        speach ? Anyway, have fun :)<br>
+                        (If you want to do this, I recogmand delete modulate process util send voice data.It make less delay. 
+                        In the beginning anything dosen't complete, I write a program just like this. It is very funny.)
+                        
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            emfont.init(function () {
+                console.log('所有字體載入完成!');
+            });
+        });
+        function isElementInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            return rect.bottom < 0 || rect.top > window.innerHeight;
+        }
+
+        function addClassToVisibleElements() {
+            var aosElements = document.querySelectorAll("div,li,img");
+            aosElements.forEach(function (aosElement) {
+                if (!isElementInViewport(aosElement))
+                    aosElement.classList.add("ed");
+                else aosElement.classList.remove("ed");
+            });
+        }
+
+        document.addEventListener("scroll", addClassToVisibleElements);
+        addClassToVisibleElements();
+
+
+    </script>
+</body>
+</body>
+
+</html>
