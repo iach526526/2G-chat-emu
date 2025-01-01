@@ -148,7 +148,7 @@ def microphone_receive(conn):
                 rc_audio = received_data["audio"]
                 pad_size = received_data["pad_size"]
                 encoded_bits_crc = received_data["encoded_bits_crc"]
-                receive.restored_audio_signal_filtered = receive.de_modual(rc_audio, pad_size, encoded_bits_crc)
+                receive.restored_audio_signal_filtered = receive.de_modula(rc_audio, pad_size, encoded_bits_crc)
                 restored_audio = np.array(receive.restored_audio_signal_filtered,dtype="float32")
                 output_stream.write(restored_audio)
                 print("Audio data played.")

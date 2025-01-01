@@ -15,7 +15,7 @@ def generate_crc(data_bits):
     print(f"Generated CRC: 0x{crc_value:04x}")
     return np.concatenate([data_bits, crc_bits])
 # 解調變
-def de_modual(fsk_signal, pad_size, encoded_bits):
+def de_modula(fsk_signal, pad_size, encoded_bits):
     try:
         # 解調 FSK 信號
         bit_rate = 1000
@@ -88,6 +88,6 @@ def de_modual(fsk_signal, pad_size, encoded_bits):
             print("CRC check failed. Data might be corrupted. Outputting corrupted signal.")
             return None, None, None
     except Exception as e:
-        print(f"Error during de_modual() or data restoration: {e}")
+        print(f"Error during de_modula() or data restoration: {e}")
         traceback.print_exc()
         return None, None, None

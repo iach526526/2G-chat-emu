@@ -3,7 +3,7 @@ import sounddevice as sd
 import soundfile as sf
 import numpy as np
 from switch_data.SecondGeneration.send import simulate_fsk_transmission
-from switch_data.SecondGeneration.receive import de_modual
+from switch_data.SecondGeneration.receive import de_modula
 input_file = ""
 Fs = 8000
 
@@ -45,7 +45,7 @@ if "__main__" == __name__:
             fsk_signal_with_noise, pad_size, encoded_bits_crc, time = send_audio()
             print(f"Audio sent. Signal length: {len(fsk_signal_with_noise)}")
         elif choice == '2':
-            restored_audio_signal_filtered, restored_audio_signal, time= de_modual(fsk_signal_with_noise, pad_size, encoded_bits_crc, time)
+            restored_audio_signal_filtered, restored_audio_signal, time= de_modula(fsk_signal_with_noise, pad_size, encoded_bits_crc, time)
             print(f"restored_audio_signal_filtered {len(restored_audio_signal_filtered)}")
             sd.play(restored_audio_signal_filtered, Fs)
             sd.wait()
