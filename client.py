@@ -2,6 +2,7 @@ import socket
 import pickle
 import argparse
 import threading
+import tkinter as tk
 import sounddevice as sd
 import numpy as np
 import struct
@@ -12,6 +13,7 @@ import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
 import zlib
 BUFFER_SIZE = 8192  # 緩衝區大小，越小延遲越低，但可能導致卡頓
+volume_threshold = 0.1  # 初始音量閾值
 Fs = 8000  # 取樣頻率
 def send_data_over_socket(conn, data):
     """
@@ -102,7 +104,7 @@ def modulation_thread(conn):
 def microphone_send(conn):
     """即時錄音並將音訊數據送入調變執行緒"""
     print("Mic-on: Speak into the microphone. Press Ctrl+C to stop.")
-    
+    global volume_threshold
     # 創建調變處理執行緒
     process_single_mod = threading.Thread(target=modulation_thread, args=(conn,))
     process_single_mod.start()
@@ -118,8 +120,8 @@ def microphone_send(conn):
                     if overflow:
                         print("Buffer overflow detected!")  # 緩衝區溢出
                     # 檢查是否收到人聲，如果音量太小則跳過
-                    if np.mean(np.abs(audio_data)) < 0.03:
-                        # print(f"Audio is silent, skipping transmission.now mean is {np.mean(np.abs(audio_data))}")
+                    if np.mean(np.abs(audio_data)) < volume_threshold:
+                        print(f"Audio is silent, skipping transmission.now mean is {np.mean(np.abs(audio_data))}")
                         continue  # 跳過發送過程，回到隊列等待新的音訊數據
                     # 將音訊數據放入 queue
                     audio_queue.put(audio_data)
@@ -193,6 +195,57 @@ def read_argv():
             print("Invalid IP address format.")
             exit(1)
     return args.mode, use_port, use_host
+def update_threshold(value,lable):
+    global volume_threshold
+    volume_threshold = float(value)/10000
+    lable.config(text=f"Threshold: {volume_threshold}")
+    print(f"Updated threshold: {volume_threshold}")
+    
+def disable_voice(bar, lable):
+    global audio_queue
+    audio_queue.put(None)
+    bar.set(3000)  # 將滑桿值設為 99
+    update_threshold(99,lable)  # 更新顯示的閾值
+    audio_queue.queue.clear()  # 清空柱列
+def create_gui(role):
+    global volume_threshold
+    root = tk.Tk()
+    root.title(f"2G chat({role})")
+    root.geometry("800x600")
+    root.minsize(100, 100)
+    # 靈敏度閾值標籤
+    now_value = tk.Label(root, text=f"Threshold:{volume_threshold}")
+    # 滑動條
+    bar = tk.Scale(root, 
+                   from_=0, 
+                   to=3000, 
+                   orient="horizontal", 
+                   command=lambda value: update_threshold(value, now_value),
+                   showvalue=False)
+    bar.set(volume_threshold)# 設定拉桿初始值
+    # 按鈕
+    termination_btn = tk.Button(root, text="Exit",
+                                command=root.destroy,
+                                activeforeground='#0f0',
+                                background='#f00')
+    close_mic = tk.Button(root, text="close mic",
+                          
+                            command=lambda: disable_voice(bar, now_value),
+                            activeforeground='#fff', background='#00f')
+    # 顯示
+    now_value.pack(pady=10)
+    bar.pack(pady=10)
+    termination_btn.pack(pady=10)
+    close_mic.pack(pady=10)
+
+
+    def on_close():
+        root.destroy()
+        print("GUI closed. Exiting...")
+        exit(0)
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
+    return root
 if __name__ == "__main__":
     # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
     mode, port, host = read_argv()
@@ -204,11 +257,8 @@ if __name__ == "__main__":
         print("Invalid mode selected.")
         exit(1)
 
-    # 啟動接收與傳送執行緒
-    # threading.Thread(target=handle_receive_msg, args=(conn,), daemon=True).start()
-    # threading.Thread(target=handle_send_msg, args=(conn,), daemon=True).start()
     if (mode == 'client'):
         threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
     threading.Thread(target=microphone_receive, args=(conn,), daemon=True).start()
-    while True:
-        pass
+    gui = create_gui(mode)
+    gui.mainloop()
