@@ -15,6 +15,7 @@ import zlib
 BUFFER_SIZE = 8192  # 緩衝區大小，越小延遲越低，但可能導致卡頓
 volume_threshold = 0.1  # 初始音量閾值
 Fs = 8000  # 取樣頻率
+exit_event = threading.Event()  # 用於通知結束的全域事件
 def send_data_over_socket(conn, data):
     """
     傳送數據到接收端（使用 Pickle 和壓縮）
@@ -112,7 +113,7 @@ def microphone_send(conn):
     try:
         # 使用 InputStream 即時錄音
         with sd.InputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as input_stream:
-            while True:
+            while not exit_event.is_set():
                 try:
                     # 從麥克風獲取音訊數據
                     audio_data, overflow = input_stream.read(BUFFER_SIZE)
@@ -120,7 +121,7 @@ def microphone_send(conn):
                     if overflow:
                         print("Buffer overflow detected!")  # 緩衝區溢出
                     # 檢查是否收到人聲，如果音量太小則跳過
-                    if np.mean(np.abs(audio_data)) < volume_threshold:
+                    if np.sqrt(np.mean(audio_data**2, axis=0)) < volume_threshold:
                         print(f"Audio is silent, skipping transmission.now mean is {np.mean(np.abs(audio_data))}")
                         continue  # 跳過發送過程，回到隊列等待新的音訊數據
                     # 將音訊數據放入 queue
@@ -129,6 +130,7 @@ def microphone_send(conn):
                 except Exception as e:
                     print(f"Error in microphone_send() loop: {e}")
                     break
+            print("錄音退出")
     except KeyboardInterrupt:
         process_single_mod.join()
         print("錄音停止")
@@ -137,12 +139,13 @@ def microphone_receive(conn):
     """接收音訊並播放"""
     print("start reveive")
     with sd.OutputStream(samplerate=Fs, channels=1, blocksize=BUFFER_SIZE) as output_stream:
-        while True:
+        while not exit_event.is_set():
             try:
                 received_data = receive_data_over_socket(conn)
                 # print("收到了：",received_data)
                 if received_data is None:
                     print("通道已關閉，結束接收音訊。")
+                    exit_event.is_set()
                     break
                 # 解調變處理
                 rc_audio = received_data["audio"]
@@ -164,7 +167,16 @@ def start_server(port):
     server_socket.bind(('0.0.0.0', port))
     server_socket.listen(1)
     print(f"Listening for connections on port {port}...")
-    conn, addr = server_socket.accept()
+    server_socket.settimeout(1)  # 設定超時時間為 5 秒
+    conn = None
+    addr = None
+    while not exit_event.is_set():
+        try:
+            conn, addr = server_socket.accept()
+            print(f"Connected by {addr}")
+            return conn
+        except socket.timeout:
+            continue  # 超時後重新檢查 exit_event
     print(f"Connected by {addr}")
     return conn
 
@@ -202,11 +214,17 @@ def update_threshold(value,lable):
     
 def disable_voice(bar, lable):
     global audio_queue
-    audio_queue.put(None)
-    bar.set(3000)  # 將滑桿值設為 99
-    update_threshold(99,lable)  # 更新顯示的閾值
+    while not audio_queue.empty():
+        audio_queue.get()
+    bar.set(9000)  # 將滑桿值設為 0.9
+    update_threshold(9000,lable)  # 更新顯示的閾值
     audio_queue.queue.clear()  # 清空柱列
 def create_gui(role):
+    
+    def on_close():
+        root.destroy()
+        print("GUI closed. Exiting...")
+        exit_event.set()  # 通知其他執行緒退出
     global volume_threshold
     root = tk.Tk()
     root.title(f"2G chat({role})")
@@ -217,47 +235,41 @@ def create_gui(role):
     # 滑動條
     bar = tk.Scale(root, 
                    from_=0, 
-                   to=3000, 
+                   to=9000, 
                    orient="horizontal", 
                    command=lambda value: update_threshold(value, now_value),
                    showvalue=False)
     bar.set(volume_threshold)# 設定拉桿初始值
     # 按鈕
     termination_btn = tk.Button(root, text="Exit",
-                                command=root.destroy,
+                                command=on_close,
                                 activeforeground='#0f0',
                                 background='#f00')
-    close_mic = tk.Button(root, text="close mic",
+    close_mic = tk.Button(root, text="🔇",
                           
                             command=lambda: disable_voice(bar, now_value),
-                            activeforeground='#fff', background='#00f',foreground="#FFF")
+                            activeforeground='#fff')
     # 顯示
     now_value.pack(pady=10)
     bar.pack(pady=10)
     termination_btn.pack(pady=10)
     close_mic.pack(pady=10)
-
-
-    def on_close():
-        root.destroy()
-        print("GUI closed. Exiting...")
-        exit(0)
-
     root.protocol("WM_DELETE_WINDOW", on_close)
     return root
+def start_grahpic(mode):
+    gui = create_gui(f"{mode}")
+    gui.mainloop()
 if __name__ == "__main__":
     # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
     mode, port, host = read_argv()
+    conn = None
     if mode == 'server':
-        gui = create_gui(mode)
+        threading.Thread(target=start_grahpic, args=(mode,), daemon=True).start()
         conn = start_server(port)
     elif mode == 'client':
-        gui = create_gui(mode)
+        threading.Thread(target=start_grahpic, args=(mode,), daemon=True).start()
         conn = connect_to_peer(host, port)
-    else:
-        print("Invalid mode selected.")
-        exit(1)
-
+    # 若參數錯誤， read_argv() 會退出程式
     threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
     threading.Thread(target=microphone_receive, args=(conn,), daemon=True).start()
-    gui.mainloop()
+    exit_event.wait()
