@@ -3,6 +3,7 @@ import pickle
 import argparse
 import threading
 import tkinter as tk
+from PIL import Image, ImageTk
 import sounddevice as sd
 import numpy as np
 import struct
@@ -13,7 +14,8 @@ import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
 import zlib
 BUFFER_SIZE = 8192  # 緩衝區大小，越小延遲越低，但可能導致卡頓
-volume_threshold = 0.1  # 初始音量閾值
+THRESHOLD_MAX = 2000  # 實際讀值要再除 1000
+volume_threshold =THRESHOLD_MAX/2 # 初始音量閾值
 Fs = 8000  # 取樣頻率
 exit_event = threading.Event()  # 用於通知結束的全域事件
 def send_data_over_socket(conn, data):
@@ -161,7 +163,7 @@ def microphone_receive(conn):
                 break
             
 
-def start_server(port):
+def start_server(port,status):
     """啟動伺服器模式"""
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('0.0.0.0', port))
@@ -170,21 +172,26 @@ def start_server(port):
     server_socket.settimeout(1)  # 設定超時時間為 5 秒
     conn = None
     addr = None
+    status.put(f"waiting for connection on port {port}...")
     while not exit_event.is_set():
         try:
             conn, addr = server_socket.accept()
             print(f"Connected by {addr}")
+            status.put(f"Connected to {addr}")
             return conn
         except socket.timeout:
             continue  # 超時後重新檢查 exit_event
     print(f"Connected by {addr}")
+    status.put("Server stopped.")
     return conn
 
-def connect_to_peer(host, port):
+def connect_to_peer(host, port,status):
     """連線到另一個 P2P 節點"""
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    status.put(f"trying to connect {host}:{port}...")
     client_socket.connect((host, port))
     print(f"Connected to {host}:{port}")
+    status.put(f"Connected to {host}:{port}")
     return client_socket
 def read_argv():
     # return mode, port, host. if user didn't input port or host, use default value.
@@ -209,66 +216,100 @@ def read_argv():
     return args.mode, use_port, use_host
 def update_threshold(value,lable):
     global volume_threshold
-    volume_threshold = float(value)/10000
+    volume_threshold = float(value)/1000
     lable.config(text=f"Threshold: {volume_threshold}")
     
-def disable_voice(bar, lable):
+def toggle_voice(btn_self,bar, lable):
     global audio_queue
+    current_text = btn_self.cget("text")  # 獲取按鈕當前文字
     while not audio_queue.empty():
         audio_queue.get()
-    bar.set(9000)  # 將滑桿值設為 0.9
-    update_threshold(9000,lable)  # 更新顯示的閾值
+    if current_text == "🔊":# 把麥關掉
+        bar.set(THRESHOLD_MAX)
+        update_threshold(THRESHOLD_MAX,lable)  # 更新顯示的閾值
+    else:
+        bar.set(THRESHOLD_MAX/2)
+        update_threshold(THRESHOLD_MAX/2,lable)  # 更新顯示的閾值
+    new_text = "🔇" if current_text == "🔊" else "🔊"
+    btn_self.config(text=new_text)
+        
     audio_queue.queue.clear()  # 清空柱列
-def create_gui(role):
-    
+def create_gui(role,status):
     def on_close():
-        root.destroy()
         print("GUI closed. Exiting...")
+        root.destroy()
         exit_event.set()  # 通知其他執行緒退出
+    def update_status():
+        try:
+            while not status.empty():
+                message = status.get_nowait()
+                status_var.set(message)
+        except queue.Empty:
+            pass
+        if not exit_event.is_set():
+            root.after(100, update_status)
     global volume_threshold
+    global tk_img
     root = tk.Tk()
     root.title(f"2G chat({role})")
     root.geometry("420x650")
     root.minsize(210, 325)
+    root.maxsize(420, 650)
+    if role == "server":
+        img_obj= Image.open('.\\img\\zelda-Road94.jpg')
+        tk_img = ImageTk.PhotoImage(img_obj)
+        pos='center'
+    else:
+        img_obj= Image.open('.\\img\\link-Road94.jpg')
+        tk_img = ImageTk.PhotoImage(img_obj)
+        pos='center'
+    gavartar = tk.Label(root, image=tk_img, width=650, height=300, anchor=pos)
+    status_var = tk.StringVar(value=status)
+    status_label = tk.Label(root, textvariable=status_var, font=("Arial", 15))
     # 靈敏度閾值標籤
     now_value = tk.Label(root, text=f"Threshold:{volume_threshold}")
     # 滑動條
-    bar = tk.Scale(root, 
-                   from_=0, 
-                   to=9000, 
-                   orient="horizontal", 
+    bar = tk.Scale(root,
+                   from_=0,
+                   to=THRESHOLD_MAX,
+                   orient="horizontal",
                    command=lambda value: update_threshold(value, now_value),
                    showvalue=False)
     bar.set(volume_threshold)# 設定拉桿初始值
     # 按鈕
-    termination_btn = tk.Button(root, text="Exit",
+    termination_btn = tk.Button(root, text="📞",
                                 command=on_close,
+                                font=("Arial", 24),  # 字體名稱和大小
                                 activeforeground='#0f0',
-                                background='#f00')
-    close_mic = tk.Button(root, text="🔇",
+                                background='#A00')
+    close_mic = tk.Button(root, text="🔊",
                           
-                            command=lambda: disable_voice(bar, now_value),
+                            command=lambda: toggle_voice(close_mic,bar, now_value),
                             activeforeground='#fff')
     # 顯示
+    gavartar.pack()
+    status_label.pack(pady=20)
     now_value.pack(pady=10)
     bar.pack(pady=10)
-    termination_btn.pack(pady=10)
     close_mic.pack(pady=10)
+    termination_btn.pack(pady=10)
+    root.after(100, update_status) # 每 100 毫秒更新一次狀態
     root.protocol("WM_DELETE_WINDOW", on_close)
     return root
-def start_grahpic(mode):
-    gui = create_gui(f"{mode}")
+def start_grahpic(mode,string):
+    gui = create_gui(mode,string)
     gui.mainloop()
 if __name__ == "__main__":
     # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
     mode, port, host = read_argv()
     conn = None
+    status_string = queue.Queue(maxsize=1) 
     if mode == 'server':
-        threading.Thread(target=start_grahpic, args=(mode,), daemon=True).start()
-        conn = start_server(port)
+        threading.Thread(target=start_grahpic, args=(mode,status_string), daemon=True).start()
+        conn = start_server(port, status_string)
     elif mode == 'client':
-        threading.Thread(target=start_grahpic, args=(mode,), daemon=True).start()
-        conn = connect_to_peer(host, port)
+        threading.Thread(target=start_grahpic, args=(mode,status_string), daemon=True).start()
+        conn = connect_to_peer(host, port,status_string)
     # 若參數錯誤， read_argv() 會退出程式
     threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
     threading.Thread(target=microphone_receive, args=(conn,), daemon=True).start()
