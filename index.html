@@ -16,7 +16,21 @@
         p {
             font-size: large;
         }
-
+        code
+        {
+            background-color: #f4f4f4;;
+            font-family: monospace;
+            padding: 5px;
+            border-radius: 5px;
+            color: #b614f7d3;
+            display: block;
+            padding: 2rem;
+            margin: 1rem;
+            white-space: pre-wrap;
+        }
+        code span{
+            color: #17a00b;
+        }
         header>div,
         main,
         section>div {
@@ -46,14 +60,36 @@
                 
                 z-index: -2;
             } */
+        header img{
+            right: -10%;
+            top: 40%;
+            width: 40%;
+            position:absolute;
+        }
         .flex-box {
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
         }
         .flex-box>img {
-            flex: 6;
-            object-fit: contain;
+            flex: 2;
+            width: 40%;
+            flex-wrap: wrap;
+            min-width: 300px;
+        }
+        .flex-box>div {
+            flex: 4;
+            padding: 1rem;
+        }
+        .flex-box>h3 {
+
+            flex: 3;
+            text-align: center;
+        }
+        .flex-box>code {
+            text-align: left;
+            flex: 4;
         }
         header>div {
             padding-top: 3rem;
@@ -86,14 +122,10 @@
             margin-bottom: 1.5rem;
         }
 
-        .how {
+        .second-title {
             margin-top: 2rem;
+            text-align: left;
         }
-
-        .center {
-            text-align: center;
-        }
-
         div,img,
         li {
             opacity: 0;
@@ -112,24 +144,24 @@
     <header style="position:relative;">
         <div>
             <div>
-                <h1 class="emfont-MisekiBitmap">Second Generation phone emulate</h1>
+                <h1 class="emfont-MisekiBitmap">Second Generation phone emulate⚡⚡</h1>
                 <p class="emfont-Smiley-Sans">Author: iach526526</p>
                 <a href="https://github.com/iach526526" target="_blank" class="emfont-Smiley-Sans">Github</a>
+                <img src="img/tar.jpg" alt="phone">
             </div>
-            <img src="img/tar.jpg" alt="phone" style="width: 350px;">
         </div>
     </header>
-    <main>
+    <main class="emfont-NotoSansTC">
 
         <div>
-            <h2>What it is?</h1>
+            <h2 class="second-title">What it is?</h1>
                 <p>This is a python program that emulate 2G(Second Generation) mobile communications.
                     It can simulate the process of making and receiving calls. Because of we don't have a real 2G base
                     station, so I use socket point to point to transmit voice package.
                 </p>
 
         </div>
-        <h2 class="how center">Schema</h2>
+        <h2 class="second-title">Schema</h2>
         <section>
             <div class="flex-box">
                 <div>
@@ -147,7 +179,7 @@
                         In this project, we don't have a real base station. Just use wireless AP or loopback address to simulate it.
                     </p>
                 </div>
-                <img src="img/basic_schema.png" alt="server" style="width: 300px;">
+                <img src="img/basic_schema.png" alt="server">
             </div>
             <div class="flex-box">
                 <p>So...<br>
@@ -156,14 +188,59 @@
                 </p>
             </div>
         </section>
-        <h2 class="how center">How to use</h2>
+        <h2 class="second-title">How to run?</h2>
         <section>
             <div class="flex-box">
-                
+                <div>
+                    <h3>run Python virtual environment(optional)</h3>
+                    <p>Run python virtual environment is a good habit. It can isolate your project dependency from global python environment.
+                    </p>
+                </div>
+                <code>
+pip3 install virtualenv
+
+virtualenv ven <span>#alter any name you want</span><br>
+<span># Windows</span>
+./ven/Script/activate
+
+<span># linux</span>
+source ven/bin/activate</code>
                     
             </div>
-        <section>
-        <h2 class="how center">By this project code,You can...</h2>
+            <div class="flex-box">
+                <div>
+                    <h3>Install dependency</h3>
+
+                </div>
+            <code>pip install -r requirements.txt</code>
+            </div>
+            <div class="flex-box">
+                <div>
+                    <h3>Run Python main file</h3>
+                    <p>Run main.py to start program. It will listen on port 3000 and link to localhost default. You can change it by argument</p>
+                </div>
+<code>
+<span>#compile package to C language. Make it faster.</span> 
+python setup.py build_ext --inplace
+<span># use default setting(port 3000, localhost). You have to open two terminal run this command twice, server mode start first.</span> 
+python main.py {client | server}</code>   
+            </div>
+            <div class="flex-box">
+                <div>
+                    <h3>help</h3>
+                    <p>Use -h to get help message</p>
+                </div>
+                <code>
+~#python .\main.py -h
+    options:
+    -h, --help       show this help message and exit
+    --port PORT      Port number default is 3000
+    --host HOST      Server IP address. default is '127.0.0.1'. Example:'192.168.0.1'
+                    (required for client mode)
+                </code>
+            </div>
+            </section>
+        <h2 class="second-title">By this project code,You can...</h2>
         <section>
             <div class="flex-box">
                 <div>
