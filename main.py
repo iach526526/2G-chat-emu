@@ -199,7 +199,6 @@ def update_threshold(value,lable):
     global volume_threshold
     volume_threshold = float(value)/10000
     lable.config(text=f"Threshold: {volume_threshold}")
-    print(f"Updated threshold: {volume_threshold}")
     
 def disable_voice(bar, lable):
     global audio_queue
@@ -211,8 +210,8 @@ def create_gui(role):
     global volume_threshold
     root = tk.Tk()
     root.title(f"2G chat({role})")
-    root.geometry("800x600")
-    root.minsize(100, 100)
+    root.geometry("420x650")
+    root.minsize(210, 325)
     # 靈敏度閾值標籤
     now_value = tk.Label(root, text=f"Threshold:{volume_threshold}")
     # 滑動條
@@ -231,7 +230,7 @@ def create_gui(role):
     close_mic = tk.Button(root, text="close mic",
                           
                             command=lambda: disable_voice(bar, now_value),
-                            activeforeground='#fff', background='#00f')
+                            activeforeground='#fff', background='#00f',foreground="#FFF")
     # 顯示
     now_value.pack(pady=10)
     bar.pack(pady=10)
@@ -250,15 +249,15 @@ if __name__ == "__main__":
     # server 也可以傳送訊息給 client，這裡只是用來配對的，發起電話的人是 client 端
     mode, port, host = read_argv()
     if mode == 'server':
+        gui = create_gui(mode)
         conn = start_server(port)
     elif mode == 'client':
+        gui = create_gui(mode)
         conn = connect_to_peer(host, port)
     else:
         print("Invalid mode selected.")
         exit(1)
 
-    if (mode == 'client'):
-        threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
+    threading.Thread(target=microphone_send, args=(conn,),daemon=True).start()
     threading.Thread(target=microphone_receive, args=(conn,), daemon=True).start()
-    gui = create_gui(mode)
     gui.mainloop()
