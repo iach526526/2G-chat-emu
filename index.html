@@ -73,7 +73,7 @@
             flex-wrap: wrap;
         }
         .flex-box>img {
-            flex: 2;
+            flex: 3;
             width: 40%;
             flex-wrap: wrap;
             min-width: 300px;
@@ -137,6 +137,20 @@
             opacity: 1;
             transform: translateY(0);
         }
+        #demo img{
+            margin: 1rem;
+        }
+        .hidden {
+            opacity: 0;
+        }
+        #server-demo:hover +#client-demo{
+            filter: brightness(1);
+            opacity: 1;
+        }
+        #client-demo{
+            filter: brightness(5%);
+            opacity: 0.8;
+        }
     </style>
 </head>
 
@@ -146,7 +160,7 @@
             <div>
                 <h1 class="emfont-MisekiBitmap">Second Generation phone emulate⚡⚡</h1>
                 <p class="emfont-Smiley-Sans">Author: iach526526</p>
-                <a href="https://github.com/iach526526" target="_blank" class="emfont-Smiley-Sans">Github</a>
+                <a href="https://github.com/iach526526/2G-chat-emu" target="_blank" class="emfont-Smiley-Sans">Github</a>
                 <img src="img/tar.jpg" alt="phone">
             </div>
         </div>
@@ -240,6 +254,18 @@ python main.py {client | server}</code>
                 </code>
             </div>
             </section>
+        <h2 class="second-title">Demo</h2>
+        <section>
+            <div class="flex-box" id="demo">
+                <div>
+                    <h3>Voice activity control and emulated Internet telephony interface</h3>
+                    <p>I use tkinter for GUI display. It can simple control voice active peak and terminate program.
+                    </p>
+                </div>
+                <img src="img/demo-server-unconnected.png" alt="server-demo" id="server-demo">
+                <img src="img/demo-client-connected.png" alt="client-demo" id="client-demo">
+            </div>
+        </section>
         <h2 class="second-title">By this project code,You can...</h2>
         <section>
             <div class="flex-box">
@@ -266,6 +292,13 @@ python main.py {client | server}</code>
                 </div>
             </div>
         </section>
+        <footer>
+            <div>
+                <p>Thanks for reading! If you have any question, please contact me by Github issue or email. I will reply as soon as possible.
+                    Btw,The Zelda picture in this project is from <a href='https://www.deviantart.com/road94'>Road94</a> on DeviantArt. Thanks for his great work. This image is used under the Creative Commons Attribution-NonCommercial-NoDerivatives 3.0 License."
+                </p>
+                
+        </footer>
     </main>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -289,8 +322,24 @@ python main.py {client | server}</code>
 
         document.addEventListener("scroll", addClassToVisibleElements);
         addClassToVisibleElements();
-
-
+    
+        
+        // Hover 事件：改變圖片 demo src
+    const server_demo_img = document.getElementById('server-demo');
+    server_demo_img.addEventListener('mouseenter', () => {
+      server_demo_img.classList.add('hidden');  // 先隱藏圖片（透明）
+      setTimeout(() => {
+          server_demo_img.classList.remove('hidden');  // 顯示新圖片（淡入）
+          server_demo_img.src = 'img/demo-server-connected.png';  // Hover 時的圖片
+      }, 250); // 等待圖片淡出結束
+    });
+    server_demo_img.addEventListener('mouseleave', () => {
+      server_demo_img.classList.add('hidden');
+      setTimeout(() => {
+        server_demo_img.classList.remove('hidden');
+        server_demo_img.src = 'img/demo-server-unconnected.png';  // 還原的圖片
+      }, 250);
+    });
     </script>
 </body>
 </body>
