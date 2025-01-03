@@ -1,348 +1,382 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Second Generation phone emulate</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Second Generation Phone Emulator</title>
     <script src="https://font.emtech.cc/emfont.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        p {
-            font-size: large;
-        }
-        code
-        {
-            background-color: #f4f4f4;;
-            font-family: monospace;
-            padding: 5px;
-            border-radius: 5px;
-            color: #b614f7d3;
-            display: block;
-            padding: 2rem;
-            margin: 1rem;
-            white-space: pre-wrap;
-        }
-        code span{
-            color: #17a00b;
-        }
-        header>div,
-        main,
-        section>div {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+      p {
+        font-size: large;
+      }
+      code {
+        background-color: #f4f4f4;
+        font-family: monospace;
+        padding: 5px;
+        border-radius: 5px;
+        color: #b614f7d3;
+        display: block;
+        padding: 2rem;
+        margin: 1rem;
+        white-space: pre-wrap;
+      }
+      code span {
+        color: #17a00b;
+      }
+      header > div,
+      main,
+      section > div {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
 
-        header::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 5rem);
-            background: #4955c4;
-            z-index: -10;
-        }
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: calc(100% - 5rem);
+        background: #4955c4;
+        z-index: -10;
+      }
 
-        /* header::after {
+      /* header::after {
                 content: "";
                 position: absolute;
                 bottom: 0;
                 left: 0;
                 width: 100%;
                 height: 10rem;
-                
+
                 z-index: -2;
             } */
-        header img{
-            right: -10%;
-            top: 40%;
-            width: 40%;
-            position:absolute;
-        }
-        .flex-box {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .flex-box>img {
-            flex: 3;
-            width: 40%;
-            flex-wrap: wrap;
-            min-width: 300px;
-        }
-        .flex-box>div {
-            flex: 4;
-            padding: 1rem;
-        }
-        .flex-box>h3 {
+      header img {
+        right: -10%;
+        top: 40%;
+        width: 40%;
+        position: absolute;
+      }
+      .flex-box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .flex-box > img {
+        flex: 3;
+        width: 40%;
+        flex-wrap: wrap;
+        min-width: 300px;
+      }
+      .flex-box > div {
+        flex: 4;
+        padding: 1rem;
+      }
+      .flex-box > h3 {
+        flex: 3;
+        text-align: center;
+      }
+      .flex-box > code {
+        text-align: left;
+        flex: 4;
+      }
+      header > div {
+        padding-top: 3rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: rgb(0, 0, 0);
+      }
+      div > p {
+        margin: 1rem;
+      }
+      header h1 {
+        text-shadow: 2px 3px #eee9e9d3;
+      }
 
-            flex: 3;
-            text-align: center;
-        }
-        .flex-box>code {
-            text-align: left;
-            flex: 4;
-        }
-        header>div {
-            padding-top: 3rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: rgb(0, 0, 0);
-        }
-        div > p{
-            margin: 1rem;
-        }
-        header h1 {
-            text-shadow: 2px 3px #eee9e9d3;
-        }
+      header a {
+        /* GitHub button */
+        background-color: rgb(18, 19, 19);
+        text-decoration: none;
+        color: rgb(255, 255, 255);
+        padding: 1.125rem 1rem;
+        display: block;
+        width: fit-content;
+      }
 
-        header a {
-            /* GitHub button */
-            background-color: rgb(18, 19, 19);
-            text-decoration: none;
-            color: rgb(255, 255, 255);
-            padding: 1.125rem 1rem;
-            display: block;
-            width: fit-content;
-        }
+      header p,
+      header a {
+        font-family: "GravityBold8";
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+      }
 
-        header p,
-        header a {
-            font-family: "GravityBold8";
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-        }
+      .second-title {
+        margin-top: 2rem;
+        text-align: left;
+      }
+      div,
+      img,
+      li {
+        opacity: 0;
+        transition: all 1s;
+        transform: translateY(1em);
+      }
 
-        .second-title {
-            margin-top: 2rem;
-            text-align: left;
-        }
-        div,img,
-        li {
-            opacity: 0;
-            transition: all 1s;
-            transform: translateY(1em);
-        }
-
-        .ed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        #demo img{
-            margin: 1rem;
-        }
-        .hidden {
-            opacity: 0;
-        }
-        #server-demo:hover +#client-demo{
-            filter: brightness(1);
-            opacity: 1;
-        }
-        #client-demo{
-            filter: brightness(5%);
-            opacity: 0.8;
-        }
+      .ed {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #demo img {
+        margin: 1rem;
+      }
+      .hidden {
+        opacity: 0;
+      }
+      #server-demo:hover + #client-demo {
+        filter: brightness(1);
+        opacity: 1;
+      }
+      #client-demo {
+        filter: brightness(5%);
+        opacity: 0.8;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <header style="position:relative;">
+  <body>
+    <header style="position: relative">
+      <div>
         <div>
-            <div>
-                <h1 class="emfont-MisekiBitmap">Second Generation phone emulate⚡⚡</h1>
-                <p class="emfont-Smiley-Sans">Author: iach526526</p>
-                <a href="https://github.com/iach526526/2G-chat-emu" target="_blank" class="emfont-Smiley-Sans">Github</a>
-                <img src="img/tar.jpg" alt="phone">
-            </div>
+          <h1 class="emfont-MisekiBitmap">
+            Second Generation Phone Emulator ⚡⚡
+          </h1>
+          <p class="emfont-Smiley-Sans">Author: iach526526</p>
+          <a
+            href="https://github.com/iach526526/2G-chat-emu"
+            target="_blank"
+            class="emfont-Smiley-Sans"
+            >GitHub</a
+          >
+          <img src="img/tar.jpg" alt="Phone" />
         </div>
+      </div>
     </header>
     <main class="emfont-NotoSansTC">
+      <div>
+        <h2 class="second-title">What it is?</h2>
+        <p>
+          This Python program emulates 2G (Second Generation) mobile
+          communication systems, simulating the process of making and receiving
+          calls. Since real 2G base stations are unavailable, it uses a
+          point-to-point socket connection to transmit voice packets.
+        </p>
+      </div>
+      <h2 class="second-title">Schema</h2>
+      <section>
+        <div class="flex-box">
+          <div>
+            <h3>Server</h3>
+            <p>
+              The server opens a specific port and waits for a client
+              connection. Once connected, it receives voice packets, demodulates
+              them, and plays the audio. In a real-world scenario, the server
+              represents the person receiving the call. The server stays in the
+              base station's signal range and passively participates in the
+              session.
+            </p>
 
-        <div>
-            <h2 class="second-title">What it is?</h1>
-                <p>This Python program emulates 2G (Second Generation) mobile communication systems, 
-                    simulating the process of making and receiving calls. 
-                    Since we do not have access to a real 2G base station, 
-                    I use a point-to-point socket connection to transmit voice packets.
-                </p>
+            <h3>Client</h3>
+            <p>
+              The client initiates the voice session by connecting to the
+              server. It records the user's voice, modulates it, and sends the
+              data to the server.
+            </p>
 
+            <h3>Base station</h3>
+            <p>
+              A base station provides signals to mobile phones and is always
+              actively broadcasting. This project simulates a base station using
+              a wireless access point or a loopback address since no real base
+              station is available.
+            </p>
+          </div>
+          <img src="img/basic_schema.png" alt="Schema Diagram" />
         </div>
-        <h2 class="second-title">Schema</h2>
-        <section>
-            <div class="flex-box">
-                <div>
-                    <h3>Server</h3>
-                    <p>Server open specific port than waiting for client connect. When connect establish, server receive voice from client and de-modulation, play it.
-                        In real world, server is receive phone call person.
-                        It always in base station signal range, but it is passive start a session.
-                    </p>
-                
-                    <h3>Client</h3>
-                    <p>Client connect to server start the voice session. It will record the voice,modulation and send voice to the
-                        server. </p>
-                    <h3>Base station</h3>
-                    <p>Base station is a device that provide signal to mobile phone. It is a active device that always send signal to mobile phone.
-                        In this project, we don't have a real base station. Just use wireless AP or loopback address to simulate it.
-                    </p>
-                </div>
-                <img src="img/basic_schema.png" alt="server">
-            </div>
-            <div class="flex-box">
-                <p>So...<br>
-                    You have know server and client concept, now we combine those. 
-                    Make the end point play server and client in the same time. We will receive voice from opposite 'client'(you are server now) and transmit voice from yours client program.
-                </p>
-            </div>
-        </section>
-        <h2 class="second-title">How to run?</h2>
-        <section>
-            <div class="flex-box">
-                <div>
-                    <h3>run Python virtual environment(optional)</h3>
-                    <p>Run python virtual environment is a good habit. It can isolate your project dependency from global python environment.
-                    </p>
-                </div>
-                <code>
-pip3 install virtualenv
-
-virtualenv ven <span>#alter any name you want</span><br>
-<span># Windows</span>
-./ven/Script/activate
-
-<span># linux</span>
-source ven/bin/activate</code>
-                    
-            </div>
-            <div class="flex-box">
-                <div>
-                    <h3>Install dependency</h3>
-
-                </div>
-            <code>pip install -r requirements.txt</code>
-            </div>
-            <div class="flex-box">
-                <div>
-                    <h3>Run Python main file</h3>
-                    <p>Run main.py to start program. It will listen on port 3000 and link to localhost default. You can change it by argument</p>
-                </div>
-<code>
-<span>#compile package to C language. Make it faster.</span> 
-python setup.py build_ext --inplace
-<span># use default setting(port 3000, localhost). You have to open two terminal run this command twice, server mode start first.</span> 
-python main.py {client | server}</code>   
-            </div>
-            <div class="flex-box">
-                <div>
-                    <h3>help</h3>
-                    <p>Use -h to get help message</p>
-                </div>
-                <code>
-~#python .\main.py -h
-    options:
-    -h, --help       show this help message and exit
-    --port PORT      Port number default is 3000
-    --host HOST      Server IP address. default is '127.0.0.1'. Example:'192.168.0.1'
-                    (required for client mode)
-                </code>
-            </div>
-            </section>
-        <h2 class="second-title">Demo</h2>
-        <section>
-            <div class="flex-box" id="demo">
-                <div>
-                    <h3>Voice activity control and emulated Internet telephony interface</h3>
-                    <p>I use tkinter for GUI display. It can simple control voice active peak and terminate program.
-                    </p>
-                </div>
-                <img src="img/demo-server-unconnected.png" alt="server-demo" id="server-demo">
-                <img src="img/demo-client-connected.png" alt="client-demo" id="client-demo">
-            </div>
-        </section>
-        <h2 class="second-title">By this project code,You can...</h2>
-        <section>
-            <div class="flex-box">
-                <div>
-                    <h3>Learn how 2G work</h3>
-                    <p>2G is a old technology, but it is a good start point to learn how mobile communication work. It is simple and easy to understand.
-                        You can learn how voice transmit in the air, how to modulate and de-modulate voice. I spend some time to enhance modulation process  by numpy vector cacculate to make it more quickly.
-                    </p>
-                    <h3>Learn how socket work</h3>
-                    <p>Socket is a basic concept in network programming. It is a good start point to learn how to communicate between two or more devices.
-                        I use serial package 'pickle' to serialize voice package and send it to another side. You can learn how to use it to send complex data.
-                    </p>
-                    <h3>Talk to your friend in local network</h3>
-                    <p>
-                        This is the least practical use of this project I think...<br>
-                        Now we have Discord, Skype, Line, Messenger...etc can communicate with anyone in this world. 
-                        But mabe sometimes you want to talk to your 
-                        friend in local network just like childhood we use paper cup tied a line 
-                        speach ? Anyway, have fun :)<br>
-                        (If you want to do this, I recogmand delete modulate process util send voice data.It make less delay. 
-                        In the beginning anything dosen't complete, I write a program just like this. It is very funny.)
-                        
-                    </p>
-                </div>
-            </div>
-        </section>
-        <footer>
-            <div>
-                <p>Thanks for reading! If you have any question, please contact me by Github issue or email. I will reply as soon as possible.
-                    Btw,The Zelda picture in this project is from <a href='https://www.deviantart.com/road94'>Road94</a> on DeviantArt. Thanks for his great work. This image is used under the Creative Commons Attribution-NonCommercial-NoDerivatives 3.0 License."
-                </p>
-                
-        </footer>
+        <div class="flex-box">
+          <p>
+            Now that you understand the server and client concepts, we can
+            combine them. Each endpoint acts as both server and client,
+            receiving voice from the opposite "client" (acting as a server) and
+            transmitting voice through its own client program.
+          </p>
+        </div>
+      </section>
+      <h2 class="second-title">How to run?</h2>
+      <section>
+        <div class="flex-box">
+          <div>
+            <h3>Run Python virtual environment (optional)</h3>
+            <p>
+              Using a Python virtual environment is recommended to isolate
+              project dependencies from your global Python environment.
+            </p>
+          </div>
+          <code>
+            pip3 install virtualenv<br />
+            virtualenv ven <span># Use any name for 'ven'</span><br />
+            <span># Windows:</span> ./ven/Scripts/activate<br />
+            <span># Linux:</span> source ven/bin/activate
+          </code>
+        </div>
+        <div class="flex-box">
+          <div>
+            <h3>Install dependencies</h3>
+          </div>
+          <code>pip install -r requirements.txt</code>
+        </div>
+        <div class="flex-box">
+          <div>
+            <h3>Run the main Python file</h3>
+            <p>
+              Use `main.py` to start the program. By default, it listens on port
+              3000 and connects to localhost. These settings can be changed
+              using command-line arguments.
+            </p>
+          </div>
+          <code>
+            <span># Compile to C for better performance:</span><br />
+            python setup.py build_ext --inplace<br />
+            <span
+              ># Run with default settings (port 3000, localhost). Start the
+              server first, then the client:</span
+            ><br />
+            python main.py {client | server}
+          </code>
+        </div>
+        <div class="flex-box">
+          <div>
+            <h3>Help</h3>
+            <p>Use the `-h` flag to view available options.</p>
+          </div>
+          <code>
+            python main.py -h<br />
+            Options:<br />
+            -h, --help Show help message and exit<br />
+            --port PORT Specify port (default: 3000)<br />
+            --host HOST Specify server IP address (default: 127.0.0.1). Required
+            for client mode.
+          </code>
+        </div>
+      </section>
+      <h2 class="second-title">Demo</h2>
+      <section>
+        <div class="flex-box" id="demo">
+          <div>
+            <h3>Voice activity control and GUI</h3>
+            <p>
+              A simple GUI, built with Tkinter, allows users to control voice
+              activity levels and terminate the program.
+            </p>
+          </div>
+          <img
+            src="img/demo-server-unconnected.png"
+            alt="Server Demo"
+            id="server-demo"
+          />
+          <img
+            src="img/demo-client-connected.png"
+            alt="Client Demo"
+            id="client-demo"
+          />
+        </div>
+      </section>
+      <h2 class="second-title">By this project, you can...</h2>
+      <section>
+        <div class="flex-box">
+          <div>
+            <h3>Learn how 2G works</h3>
+            <p>
+              While 2G is an older technology, it offers a simple and clear
+              introduction to mobile communication. You can learn how voice is
+              transmitted, modulated, and demodulated. This project enhances
+              modulation using NumPy for faster vector calculations.
+            </p>
+            <h3>Learn about sockets</h3>
+            <p>
+              Sockets are fundamental in network programming. This project
+              demonstrates socket usage and how to serialize complex data using
+              Python's `pickle` module for transmission.
+            </p>
+            <h3>Communicate within a local network</h3>
+            <p>
+              Although modern apps like Discord and Skype make global
+              communication easy, this project enables a local network voice
+              chat—reminiscent of childhood games with string-and-cup
+              telephones. For less delay, you can skip the modulation process
+              when experimenting.
+            </p>
+          </div>
+        </div>
+      </section>
+      <footer>
+        <div>
+          <p>
+            Thank you for reading! For questions, contact me via GitHub issues
+            or email. The Zelda artwork in this project is by
+            <a href="https://www.deviantart.com/road94">Road94</a> on
+            DeviantArt, used under the Creative Commons
+            Attribution-NonCommercial-NoDerivatives 3.0 License.
+          </p>
+        </div>
+      </footer>
     </main>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            emfont.init(function () {
-                console.log('所有字體載入完成!');
-            });
+      document.addEventListener("DOMContentLoaded", function () {
+        emfont.init(function () {
+          console.log("所有字體載入完成!");
         });
-        function isElementInViewport(el) {
-            const rect = el.getBoundingClientRect();
-            return rect.bottom < 0 || rect.top > window.innerHeight;
-        }
+      });
+      function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return rect.bottom < 0 || rect.top > window.innerHeight;
+      }
 
-        function addClassToVisibleElements() {
-            var aosElements = document.querySelectorAll("div,li,img");
-            aosElements.forEach(function (aosElement) {
-                if (!isElementInViewport(aosElement))
-                    aosElement.classList.add("ed");
-                else aosElement.classList.remove("ed");
-            });
-        }
+      function addClassToVisibleElements() {
+        var aosElements = document.querySelectorAll("div,li,img");
+        aosElements.forEach(function (aosElement) {
+          if (!isElementInViewport(aosElement)) aosElement.classList.add("ed");
+          else aosElement.classList.remove("ed");
+        });
+      }
 
-        document.addEventListener("scroll", addClassToVisibleElements);
-        addClassToVisibleElements();
-    
-        
-        // Hover 事件：改變圖片 demo src
-    const server_demo_img = document.getElementById('server-demo');
-    server_demo_img.addEventListener('mouseenter', () => {
-      server_demo_img.classList.add('hidden');  // 先隱藏圖片（透明）
-      setTimeout(() => {
-          server_demo_img.classList.remove('hidden');  // 顯示新圖片（淡入）
-          server_demo_img.src = 'img/demo-server-connected.png';  // Hover 時的圖片
-      }, 250); // 等待圖片淡出結束
-    });
-    server_demo_img.addEventListener('mouseleave', () => {
-      server_demo_img.classList.add('hidden');
-      setTimeout(() => {
-        server_demo_img.classList.remove('hidden');
-        server_demo_img.src = 'img/demo-server-unconnected.png';  // 還原的圖片
-      }, 250);
-    });
+      document.addEventListener("scroll", addClassToVisibleElements);
+      addClassToVisibleElements();
+
+      // Hover 事件：改變圖片 demo src
+      const server_demo_img = document.getElementById("server-demo");
+      server_demo_img.addEventListener("mouseenter", () => {
+        server_demo_img.classList.add("hidden"); // 先隱藏圖片（透明）
+        setTimeout(() => {
+          server_demo_img.classList.remove("hidden"); // 顯示新圖片（淡入）
+          server_demo_img.src = "img/demo-server-connected.png"; // Hover 時的圖片
+        }, 250); // 等待圖片淡出結束
+      });
+      server_demo_img.addEventListener("mouseleave", () => {
+        server_demo_img.classList.add("hidden");
+        setTimeout(() => {
+          server_demo_img.classList.remove("hidden");
+          server_demo_img.src = "img/demo-server-unconnected.png"; // 還原的圖片
+        }, 250);
+      });
     </script>
-</body>
-</body>
-
+  </body>
 </html>
