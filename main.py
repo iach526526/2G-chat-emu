@@ -1,86 +1,32 @@
-import socket
-import pickle
 import argparse
-import threading
-import tkinter as tk
-from PIL import Image, ImageTk
-import sounddevice as sd
-import numpy as np
-import struct
-import traceback
+import pickle
 import queue
 import re
+import socket
+import struct
+import threading
+import traceback
+from os import getenv
+import zlib
+import tkinter as tk
+
+import numpy as np
+import sounddevice as sd
+from dotenv import load_dotenv
+from PIL import Image, ImageTk
+
 import switch_data.SecondGeneration.receive as receive
 import switch_data.SecondGeneration.send as send
-import zlib
+from switch_data.socket.communicate import receive_data_over_socket, send_data_over_socket
+
 BUFFER_SIZE = 8192  # 緩衝區大小，越小延遲越低，但可能導致卡頓
 THRESHOLD_MAX = 2000  # 實際讀值要再除 1000
 volume_threshold =THRESHOLD_MAX/2 # 初始音量閾值
-Fs = 8000  # 取樣頻率
+load_dotenv(override=True)
+cutoff_freq = int(getenv("cutoff_freq"))  # 低通濾波器的截止頻率
+Fs = int(getenv("Fs"))  # 取樣頻率
 exit_event = threading.Event()  # 用於通知結束的全域事件
-def send_data_over_socket(conn, data):
-    """
-    傳送數據到接收端（使用 Pickle 和壓縮）
-    :param conn: socket 連線對象
-    :param data: 要傳送的 Python 資料
-    """
-    try:
-        # 序列化數據並壓縮
-        serialized_data = pickle.dumps(data)
-        print(f"已序列化數據，原始大小: {len(serialized_data)} bytes")
-        compressed_data = zlib.compress(serialized_data)
-        data_size = len(compressed_data)
-        
-        # 傳送數據大小（4 bytes）和壓縮後的數據
-        conn.sendall(struct.pack(">I", data_size) + compressed_data)
-        
-        print(f"已成功傳送 {data_size} bytes 的壓縮數據。")
-    except (ConnectionError, OSError) as e:
-        print(f"傳送數據時發生連線錯誤: {e}")
-    except Exception as e:
-        print(f"傳送數據時發生錯誤: {e}")
-def receive_data_over_socket(conn):
-    """
-    接收來自傳送端的數據（使用 Pickle 和解壓縮）
-    :param conn: socket 連線對象
-    :return: 解包後的 Python 資料
-    """
-    try:
-        # 接收數據大小（4 bytes）
-        size_buffer = conn.recv(4)
-        if len(size_buffer) != 4:
-            raise ConnectionError("未接收到完整的數據大小資訊。")
-        
-        # 解析數據大小
-        data_size = struct.unpack(">I", size_buffer)[0]
-        print(f"準備接收 {data_size} bytes 的壓縮數據...")
-        
-        # 接收完整的壓縮資料
-        buffer = bytearray(data_size)
-        buffer_view = memoryview(buffer)
-        received_size = 0
-        
-        while received_size < data_size:
-            chunk_size = conn.recv_into(buffer_view[received_size:], data_size - received_size)
-            if chunk_size == 0:
-                raise ConnectionError("傳送端關閉連線。")
-            received_size += chunk_size
-        
-        # 解壓縮數據並反序列化
-        decompressed_data = zlib.decompress(buffer)
-        received_data = pickle.loads(decompressed_data)
-        
-        print("數據接收成功並解包完成。")
-        return received_data
-    except (ConnectionError, OSError) as e:
-        print(f"接收數據時發生連線錯誤: {e}")
-        return None
-    except zlib.error as e:
-        print(f"解壓縮失敗: {e}")
-        return None
-    except Exception as e:
-        print(f"接收數據時發生錯誤: {e}")
-        return None
+
 audio_queue = queue.Queue(maxsize=20)
 def modulation_thread(conn):
     while True:
@@ -256,11 +202,11 @@ def create_gui(role,status):
     root.minsize(210, 325)
     root.maxsize(420, 650)
     if role == "server":
-        img_obj= Image.open('.\\img\\zelda-Road94.jpg')
+        img_obj= Image.open('./img/zelda-Road94.jpg')
         tk_img = ImageTk.PhotoImage(img_obj)
         pos='center'
     else:
-        img_obj= Image.open('.\\img\\link-Road94.jpg')
+        img_obj= Image.open('./img/link-Road94.jpg')
         tk_img = ImageTk.PhotoImage(img_obj)
         pos='center'
     gavartar = tk.Label(root, image=tk_img, width=650, height=300, anchor=pos)
