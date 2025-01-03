@@ -15,8 +15,8 @@ t.start()
 
 # 主執行緒繼續執行自己的工作
 for i in range(3):
-  print("Main thread:", i)
-  time.sleep(1)
+    print("Main thread:", i)
+    time.sleep(1)
 
 # 等待 t 這個子執行緒結束
 t.join()
