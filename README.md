@@ -34,5 +34,5 @@ python main.py { server | client }
 To run this project, open two windows as shown below. The voice transcription program will then begin processing.
 <div style="display:flex; text-align=center">
 <img src="./img/demo-client-connected.png" alt="demo-client-interface" style="margin:1rem;flex:1;width;max-width:20%">
-<img src="./img/demo-server-connected.png" alt="demo-client-interface" style="margin:1rem;flex:1;max-width:20%">
+<img src="./img/demo-server-connected.png" alt="demo-server-interface" style="margin:1rem;flex:1;max-width:20%">
 </div>
