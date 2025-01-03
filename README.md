@@ -1,4 +1,4 @@
-# P2P 2G chat
+# 2G-chat-emu
 This is a python program that emulate 2G(Second Generation) mobile communications.
 It can simulate the process of making and receiving calls. Because of we don't have a real 2G base
 station, so I use socket point to point to transmit voice package.
